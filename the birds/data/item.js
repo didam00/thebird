@@ -32,16 +32,18 @@ data.item = [
     id: 'blue_spike',
     name: 'Blue Spike',
     url: 'blue_spike.png',
-    description: 'speed up!', // 15초마다 속도가 1.5 증가 및 크기 20% 감소. 2.5초간 지속
+    description: 'speed up!', // 10초마다 속도가 아주 잠깐 미친듯이 증가
     cool_end: function () {
-      bird.stat.size -= 0.2;
-      bird.stat.speed += 1.5;
+      bird.stat.speed += 25;
+      bird.immune = true;
+      bird.url = 'blue-bird.png';
       setTimeout(function () {
-        bird.stat.size += 0.2;
-        bird.stat.speed -= 1.5;
-      }, 2500)
+        bird.stat.speed -= 25;
+        bird.immune = false;
+        bird.url = 'normal-bird.png';
+      }, 200)
     },
-    cool: 12000,
+    cool: 10000,
   },
   {
     id: 'turtle_shell',
@@ -65,10 +67,18 @@ data.item = [
     id: 'magic_mushroom',
     name: 'Magic Mushroom',
     url: 'magic_mushroom.png',
-    description: 'you looks more beautiful?', // 무적 시간 증가
+    description: 'you looks more beautiful?', // 무적 시간 증가, 33% 확률로 두배의 데미지인 보라색 레이저 발사, 15초마다 무작위로 속도가 느려지거나 빨라짐
     when_get: function () {
-      bird.stat.speed -= 0.2;
+      bird.stat.magic_mushroom += 200;
     },
+    cool: 15000,
+    cool_end() {
+      if(Math.random() < 0.5) {
+        bird.stat.speed += 0.25
+      } else {
+        bird.stat.speed -= 0.25
+      }
+    }
   },
   {
     id: 'red_brick',
@@ -81,12 +91,49 @@ data.item = [
     },
   },
   {
+    id: 'aid_kit',
+    name: 'Aid Kit',
+    url: 'aid_kit.png',
+    description: '-', // 체력 2 회복, 상자를 먹을 시 일정 확률로 체력이 회복됩니다
+    when_get: function () {
+      bird.health += 2;
+    },
+  },
+  {
+    id: 'trampoline',
+    name: 'Trampoline',
+    url: 'trampoline.png',
+    description: '-', // 가시 위에서 50% 확률로 점프
+  },
+  {
     id: 'emerald_timer',
     name: 'Emerald Timer',
     url: 'emerald_timer.png',
     description: '-', // 아이템 쿨타임 감소
     when_get: function () {
       bird.stat.item_cooldown -= 0.25;
+    },
+  },
+  {
+    id: 'yellow_eyeball',
+    name: 'Yellow Eyeball',
+    url: 'yellow_eyeball.png',
+    description: '-', // 능력 발동 쿨타임 감소. 25초마다 쿨타임 초기화
+    cool: 25000,
+    when_get() {
+      bird.stat.ability_cooldown -= 0.2;
+    },
+    cool_end() {
+      bird.ability_cool = 1;
+    }
+  },
+  {
+    id: 'loud_speaker',
+    name: 'Loud Speaker',
+    url: 'loud_speaker.png',
+    description: '-', // 레이저의 두께 증가
+    when_get() {
+      bird.stat.speaker += 0.5;
     },
   },
   {

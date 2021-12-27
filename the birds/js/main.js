@@ -5,23 +5,93 @@ let bird = {
   gravity_speed: -2,
   rotate: 0,
   state: 'fly',
-  ability: 'raser',
+  ability: 'laser',
   ability_cool: 0,
   immune: false,
   health: 20,
   stat: {
-    size: 1,
     health: 20,
+    max_cool: 2000,
     speed: 1,
     power: 1,
     ability_cooldown: 1,
     item_cooldown: 1,
-    max_cool: 2000,
+    size: 1,
     redbrick: 1,
     jump: 1,
+    speaker: 1,
+    magic_mushroom: 1,
   },
   item: [],
   url: 'normal-bird.png',
+}
+
+function playsound(url) {
+  var audio = new Audio('res/sound/'+url);
+  audio.play()
+}
+
+bird.jump = function () {
+  if(bird.state == 'fly' && bird.y > 0 && bird.y <= 400) {
+    bird.gravity_speed = -2 * setting.calc * bird.stat.jump;
+    bird.rotate -= 5;
+  }
+  if(bird.ability_cool <= 0) {
+    if(bird.ability == 'laser') {
+      // shoot laser
+      $('#bird').animate({
+        left: '-=6px',
+      }, 50, function () {$('#bird').animate({
+        left: '+=6px',
+      }, 450)});
+      bird.gravity_speed = -1 * setting.calc * bird.stat.jump;
+      bird.url = 'laser-bird.png';
+      setTimeout(function () {bird.url = 'normal-bird.png'}, 500*bird.stat.redbrick);
+      bird.ability_cool = bird.stat.max_cool * bird.stat.ability_cooldown;
+      var laser = $('<div class="laser"></div>');
+      laser.css('position', 'absolute');
+      laser.css('z-index', '-1');
+      laser.css('left', ($('#bird').width()+106)+'px');
+      // laser.css('transform', 'rotate(' + bird.rotate + 'deg)');
+      laser.css('width', '700px');
+      laser.css('height', (24 * bird.stat.size * bird.stat.speaker)+'px');
+      laser.css('background-color', '#fff');
+      if(getid(bird.item, 'magic_mushroom')) {
+        if(Math.random() <= 0.33) {
+          laser.css('background-color', '#f0f');
+        }
+      }
+      if(getid(bird.item, 'ice_glass')) {
+        laser.css('transform-origin', 'left center');
+        laser.css('transform', 'rotate(' + bird.rotate + 'deg)');
+      } else {
+        var laser_rebound = setInterval(function () {
+          bird.rotate -= (bird.rotate%360)/8;
+        }, 1)
+        setTimeout(function() {clearInterval(laser_rebound)}, 50);
+      }
+      $(function live_laser() {laser.animate({
+        opacity: '-=0.5',
+      }, 100, function () {
+        live_laser();
+        laser.css('opacity', '+=0.5');
+      })});
+      // var laser_end = $('<img class="laser-end" src="res/laser-end.gif"></img>');
+      // laser_end.css('right', '0px');
+      // laser_end.css('position', 'absolute');
+      // laser_end.css('z-index', '0');
+      // laser_end.css('height', '36px');
+      $('.space').append(laser);
+      // $('.space').append(laser_end);
+      setTimeout(function () {
+        laser.remove();
+        // laser_end.remove();
+      }, 500 * bird.stat.redbrick);
+
+      playsound('laser.wav')
+    }
+  }
+  playsound('jump.wav');
 }
 
 var setting = {
@@ -30,6 +100,8 @@ var setting = {
   high_score: 0,
   score: 0,
   meter: 0,
+  gardenmode: false,
+  autoplay: false,
 }
 
 function getid(where, id) {
@@ -51,13 +123,15 @@ function getitem(id) {
   item_w.attr('id', id);
   item_g.attr('id', id);
   $('.items').append(item_w);
-  $('.items').append(item_g);
   bird.item.push({
     id: id,
     data: item_data,
     how: 1,
-    cool: item_data != undefined ? item_data.cool*bird.stat.item_cooldown : null,
   });
+  if(item_data.hasOwnProperty('cool')) {
+    $('.items').append(item_g);
+    bird.item[bird.item.length-1].cool = item_data.cool*bird.stat.item_cooldown;
+  }
 
   $('.getitem').text(item_data.name);
   $('.getitem').css('transition', '');
@@ -70,6 +144,7 @@ function getitem(id) {
   if(item_data.hasOwnProperty('when_get')) {
     item_data.when_get();
   }
+  playsound('getitem.wav');
   return bird.item[bird.item.length-1];
 }
 
@@ -99,8 +174,9 @@ function summon(id, x=700, y=(Math.random()*340)+30) {
     health: entity_data.health,
     position: {x: x, y: y},
     cool: entity_data.cool,
+    speed: entity_data.speed,
   });
-  return entity;
+  return entitys[entitys.length-1];
 }
 
 var tick, frame;
@@ -123,11 +199,14 @@ function tickfunction() {
     // }
   } else if(bird.y > 400) {
     bird.y = 400;
-    bird.gravity_speed = 2 * setting.calc;
-    bird.state = 'stun';
-    setTimeout(function () {
-      bird.state = 'fly';
-    }, 350);
+    bird.gravity_speed = 0;
+    if(!setting.gardenmode) {
+      bird.state = 'stun';
+      setTimeout(function () {
+        bird.state = 'fly';
+      }, 300);
+      bird.gravity_speed = 1.8;
+    }
   }
 
   // cool count ability
@@ -150,9 +229,8 @@ function tickfunction() {
   // cool count item
   for(var i = 0; i < bird.item.length; i++) {
     let itemelement = $('.items .item-white').filter('#'+bird.item[i].id);
-    if(bird.item[i].cool == null) {
-      itemelement.css('filter','none');
-      break;
+    if(!bird.item[i].hasOwnProperty('cool')) {
+      itemelement.css('filter','brightness(1)');
     }
 
     if(bird.item[i].cool >= 0) {
@@ -169,12 +247,6 @@ function tickfunction() {
       itemelement.css('filter','brightness(0.5)');
     }
   }
-
-  if(bird.stat.size < 0.2) {bird.stat.size = 0.2;}
-  if(bird.state != 'die') {
-    if(bird.stat.speed < 0.2) {bird.stat.speed = 0.2;}
-  }
-
 
   if(bird.state == 'stun') {
     if($('.stun').length == 0) {
@@ -201,21 +273,69 @@ function tickfunction() {
     bird.stat.speed = 0;
     bird.health = 0;
     bird.gravity_speed += 3 * setting.calc;
+    playsound('gameover.wav');
   }
 
   // summon entity
-  if(Math.random() < 0.004 * setting.calc * (bird.stat.speed)/2) {
-    summon('bat');
+  
+  if(setting.meter == 1000 || setting.meter == 2000 || setting.meter == 3000 || setting.meter == 4000 || setting.meter == 5000 || setting.meter == 6000 || setting.meter == 7000 || setting.meter == 8000 || setting.meter == 9000 || setting.meter == 10000) {
+    playsound('meter.wav');
+    $('.health').css('display', 'none');
+    setTimeout(function () {
+      $('.health').css('display', 'block');
+      setTimeout(function () {
+        $('.health').css('display', 'none');
+        setTimeout(function () {
+          $('.health').css('display', 'block');
+        }, 50)
+      }, 50)
+    }, 50)
+    bird.health += 1;
+  }
+  if(setting.meter < 1000) {
+    if(Math.random() < 0.004 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('bat');
+    }
+  } else if(setting.meter < 2000) {
+    if(Math.random() < 0.003 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('bat');
+    }
+    if(Math.random() < 0.002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('emerald_bat');
+    }
+  } else if(setting.meter < 3000) {
+    if(Math.random() < 0.002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('bat');
+    }
+    if(Math.random() < 0.0035 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('emerald_bat');
+    }
+    if(Math.random() < 0.0005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bird');
+    }
+  } else if(setting.meter > 3000) {
+    if(Math.random() < 0.002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('bat');
+    }
+    if(Math.random() < 0.005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('emerald_bat');
+    }
+    if(Math.random() < 0.0005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bird');
+    }
+    if(Math.random() < 0.0003 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('boom_fly');
+    }
   }
 
-  if(Math.random() < 0.0002 * setting.calc * (bird.stat.speed)/2) {
+  if(Math.random() < 0.0002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
     summon('white-box');
   }
 
   $('.entity').each(function (i, e) {
     var entity = entitys[i];
 
-    entity.position.x -= (entity.data.speed/2 + bird.stat.speed/2) * setting.calc
+    entity.position.x -= (entity.speed/2 + (bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed)/2) * setting.calc
 
     // func
     if(entity.data.hasOwnProperty('func')) {
@@ -224,14 +344,17 @@ function tickfunction() {
 
     if(entity.cool <= 0) {
       entity.cool = entity.data.cool;
-      entity.data.func();
+      entity.data.func(entity);
     }
 
-    // if entitys collide with raser, entity's health -2
-    if($('.raser').length > 0) {
-      if(entity.element.position().left + entity.data.width*2 > $('.raser').position().left && entity.element.position().left < $('.raser').position().left + $('.raser').width()) {
-        if(entity.element.position().top + entity.data.height*2 > $('.raser').position().top && entity.element.position().top < $('.raser').position().top + $('.raser').height()) {
+    // if entitys collide with laser, entity's health -2
+    if($('.laser').length > 0) {
+      if(entity.element.position().left + entity.data.width*2 > $('.laser').position().left && entity.element.position().left < $('.laser').position().left + $('.laser').width()) {
+        if(entity.element.position().top + entity.data.height*2 > $('.laser').position().top && entity.element.position().top < $('.laser').position().top + $('.laser').height()) {
           entity.health -= bird.stat.power * getid(data.ability, bird.ability).damage;
+          if($('.laser').css('background-color') == '#f0f') {
+            entity.health -= bird.stat.power * getid(data.ability, bird.ability).damage;
+          }
           entity.element.css('filter', 'opacity(0.5) drop-shadow(0 0 0 red)');
           setTimeout(function () {
             entity.element.css('filter', '');
@@ -245,21 +368,21 @@ function tickfunction() {
       if(entity.element.position().left + entity.data.width*2 > $('#bird').position().left && entity.element.position().left < $('#bird').position().left + $('#bird').width()) {
         if(entity.element.position().top + entity.data.height*2 > $('#bird').position().top && entity.element.position().top < $('#bird').position().top + $('#bird').height()) {
           if(bird.state != 'die') {
-            bird.health -= entity.data.attack;
             if(entity.data.hasOwnProperty('weak')) {
               if(entity.data.hasOwnProperty('when_die')) {
-                entity.data.when_die();
+                entity.data.when_die(entity);
               }
               entity.element.remove();
               entitys.splice(i, 1);
             }
-            if(bird.health <= 0) {
-              bird.state = 'die';
+            if(entity.data.attack > 0) {
+              bird.health -= entity.data.attack;
+              playsound('hitHurt.wav')
+              bird.immune = true;
+              setTimeout(function () {
+                bird.immune = false;
+              }, 500 + (bird.stat.magic_mushroom-1));
             }
-            bird.immune = true;
-            setTimeout(function () {
-              bird.immune = false;
-            }, 500);
           }
         }
       }
@@ -299,20 +422,42 @@ function tickfunction() {
     }
   }
 
-  setting.meter += bird.stat.speed/2 * setting.calc;
-  setting.score += bird.stat.speed * setting.calc / 10;
+  if(bird.state != 'die') {
+    setting.meter += (bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed)/10 * setting.calc;
+    setting.score += (bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed) * setting.calc / 10;
+  }
+
+  if(setting.autoplay) {
+    if(bird.state == 'fly') {
+      if(bird.y < 16) {
+        bird.jump()
+      }
+    }
+  }
+  if(getid(bird.item, 'trampoline')) {
+    if(bird.y < 16 && bird.state == 'fly') {
+      if(Math.random() < 0.5) {
+        bird.jump()
+        playsound('trampoline.wav')
+      } else {
+        bird.state = 'die';
+      }
+    }
+  }
 }
 
 function framefunction() {
-  if($('.raser')) {
-    $('.raser').css('bottom', (bird.y - 2) + 'px');
-    // $('.raser-end').css('bottom', (bird.y - 5) + 'px');
+  if($('.laser')) {
+    $('.laser').css('bottom', (bird.y - 2) + 'px');
+    // $('.laser-end').css('bottom', (bird.y - 5) + 'px');
   }
   
   for(var i = 0; i < bird.item.length; i++) {
-    var itemelement = $('.items .item-gray').filter('#'+bird.item[i].id);
-    if(bird.item[i].cool >= 0) {
-      itemelement.height(bird.item[i].cool/bird.item[i].data.cool * 21);
+    if(bird.item[i].hasOwnProperty('cool')) {
+      var itemelement = $('.items .item-gray').filter('#'+bird.item[i].id);
+      if(bird.item[i].cool >= 0) {
+        itemelement.height(bird.item[i].cool/bird.item[i].data.cool * 21);
+      }
     }
   }
   
@@ -320,10 +465,10 @@ function framefunction() {
   $('#bird').css('transform', 'rotate(' + bird.rotate + 'deg)');
   $('#bird').attr('src', 'res/' + bird.url);
 
-  $('.health').css('width', (bird.health*9)+'px');
+  $('.health').css('width', (bird.health*11)+'px');
 
-  $('#bird').css('width', (bird.width*bird.stat.size) + 'px');
-  $('#bird').css('height', (bird.height*bird.stat.size) + 'px');
+  $('#bird').css('width', (bird.width*(bird.stat.size < 0.1 ? 0.1 : bird.stat.size)) + 'px');
+  $('#bird').css('height', (bird.height*(bird.stat.size < 0.1 ? 0.1 : bird.stat.size)) + 'px');
 
   $('.entity').each(function (i, e) {
     var entity = entitys[i];
@@ -338,7 +483,7 @@ function framefunction() {
         }, 500)
 
         if(entity.data.hasOwnProperty('when_die')) {
-          entity.data.when_die();
+          entity.data.when_die(entity);
         }
       }
       entity.element.remove();
@@ -352,7 +497,7 @@ function framefunction() {
   $('.stun').css('left', (Number($('#bird').css('left').replace('px', '')) + bird.width/2 - 12) + 'px');
   $('.stun').css('bottom', (bird.y + bird.height + 6) + 'px');
 
-  $('.spike').css('background-position-x',  (-setting.meter) + 'px');
+  $('.spike').css('background-position-x',  (-setting.meter*5) + 'px');
 
   // fill empty space in score letter with '0'
   var score = Math.floor(setting.score).toString();
@@ -367,9 +512,15 @@ function framefunction() {
   }
   $('.score div').html(score);
   $('.high_score div').html(high_score);
+  $('.meter div').html(Math.floor(setting.meter));
 }
 
 window.onload = function () {
+  if(!localStorage.bird_high) {
+    localStorage.bird_high = 0;
+  }
+  setting.high_score = localStorage.bird_high;
+  $('.high_score div').html(setting.high_score);
   tick = setInterval(tickfunction, setting.calc)
   frame = setInterval(framefunction, setting.frame)
 
@@ -381,87 +532,48 @@ window.onload = function () {
 
   $('.restart-button').click(function () {
     // when died
-    bird.y = 200;
-    bird.gravity_speed = -2 * setting.calc;
-    bird.rotate = 0;
-    bird.state = 'fly';
-    bird.ability_cool = 1;
-    bird.stat.speed = 1;
-    bird.stat.size = 1;
-    bird.stat.ability_cooldown = 1;
-    bird.stat.item_cooldown = 1;
-    bird.stat.redbrick = 1;
-    bird.stat.max_cool = 2000;
-    bird.stat.power = 1;
-    bird.stat.jump = 1;
-    bird.health = 20;
-    bird.item = [];
-    bird.immune = false;
-    $('.items').empty();
-    setting.high_score = setting.score > setting.high_score ? setting.score : setting.high_score;
-    setting.score = 0;
-    $('#bird').css('bottom', bird.y + 'px');
-    $('#bird').css('transform', 'rotate(' + bird.rotate + 'deg)');
-    $('.game-over').css('display', 'none');
-    $('.raser').remove();
-    // $('.raser-end').remove();
-    $('.entity').remove();
-    entitys = [];
-  })
-
-  onkeydown = function (e) {
-    if(e.keyCode == 32 && bird.state == 'fly' && !pause) {
-      if(bird.state == 'fly' && bird.y > 0 && bird.y <= 400) {
-        bird.gravity_speed = -2 * setting.calc * bird.stat.jump;
-        bird.rotate -= 5;
-      }
-      if(bird.ability_cool <= 0) {
-        if(bird.ability == 'raser') {
-          $('#bird').animate({
-            left: '-=6px',
-          }, 50, function () {$('#bird').animate({
-            left: '+=6px',
-          }, 450)});
-          bird.gravity_speed = -1 * setting.calc * bird.stat.jump;
-          bird.url = 'raser-bird.png';
-          this.setTimeout(function () {bird.url = 'normal-bird.png'}, 500*bird.stat.redbrick);
-          bird.ability_cool = bird.stat.max_cool * bird.stat.ability_cooldown;
-          var raser = $('<div class="raser"></div>');
-          raser.css('position', 'absolute');
-          raser.css('z-index', '-1');
-          raser.css('left', ($('#bird').width()+106)+'px');
-          // raser.css('transform', 'rotate(' + bird.rotate + 'deg)');
-          raser.css('width', '700px');
-          raser.css('height', (24*bird.stat.size)+'px');
-          raser.css('background-color', '#fff');
-          if(getid(bird.item, 'ice_glass')) {
-            raser.css('transform-origin', 'left center');
-            raser.css('transform', 'rotate(' + bird.rotate + 'deg)');
-          } else {
-            var raser_rebound = setInterval(function () {
-              bird.rotate -= (bird.rotate%360)/8;
-            }, 1)
-            this.setTimeout(function() {clearInterval(raser_rebound)}, 50);
-          }
-          $(function live_raser() {raser.animate({
-            opacity: '-=0.5',
-          }, 100, function () {
-            live_raser();
-            raser.css('opacity', '+=0.5');
-          })});
-          // var raser_end = $('<img class="raser-end" src="res/raser-end.gif"></img>');
-          // raser_end.css('right', '0px');
-          // raser_end.css('position', 'absolute');
-          // raser_end.css('z-index', '0');
-          // raser_end.css('height', '36px');
-          $('.space').append(raser);
-          // $('.space').append(raser_end);
-          setTimeout(function () {
-            raser.remove();
-            // raser_end.remove();
-          }, 500 * bird.stat.redbrick);
+    if(!setting.gardenmode) {
+      bird.y = 200;
+      bird.rotate = 0;
+      bird.ability_cool = 1;
+      for(var i = 0; i<Object.keys(bird.stat).length; i++) {
+        var key = Object.keys(bird.stat)[i];
+        if(key == 'health') {
+          bird.stat[key] = 20;
+        } else if(key == 'max_cool') {
+          bird.stat[key] = 2000;
+        } else {
+          bird.stat[key] = 1;
         }
       }
+      bird.item = [];
+      bird.immune = false;
+      bird.gravity_speed = -2 * setting.calc;
+      $('.items').empty();
+      $('#bird').css('bottom', bird.y + 'px');
+      $('#bird').css('transform', 'rotate(' + bird.rotate + 'deg)');
+      $('.laser').remove();
+      // $('.laser-end').remove();
+      $('.entity').remove();
+      entitys = [];
+    }
+    if(setting.gardenmode) {
+      bird.gravity_speed = -3.5 * setting.calc;
+      bird.y += 10;
+    }
+    $('.game-over').css('display', 'none');
+    bird.stat.speed = 1;
+    bird.state = 'fly';
+    bird.health = 20;
+    setting.high_score = setting.score > setting.high_score ? setting.score : setting.high_score;
+    localStorage.bird_high = setting.high_score;
+    setting.score = 0;
+    setting.meter = 0;
+  })
+
+  $(document).on('keydown', function (e) {
+    if(e.keyCode == 32 && bird.state == 'fly' && !pause) {
+      bird.jump();
     }
     if(bird.state == 'die' && e.keyCode == 32) {
       $('.restart-button').click()
@@ -470,7 +582,7 @@ window.onload = function () {
     if(e.keyCode == 27) {
       $('.pause-button').click()
     }
-  }
+  })
 
   $('.pause-button').click(function() {
     if(!pause) {

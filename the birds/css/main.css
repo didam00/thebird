@@ -7,6 +7,9 @@
   -webkit-app-region: no-drag;
   font-family: 'Press Start 2P', cursive;
   color: white;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .space img {
@@ -55,15 +58,15 @@
 .health {
   height: 18px;
   width: 180px;
-  /* background: url(../res/ui/health.png); */
-  background: white;
+  background: url(../res/ui/health.png);
+  /* background: white; */
   position: absolute;
   left: calc(50% - 353px); top: calc(50% + 212px);
 }
 
 .ability {
   width: 48px; height: 48px;
-  background: url('../res/ui/raser-item-icon.png');
+  background: url('../res/ui/laser-item-icon.png');
   background-size: 48px;
   position: absolute; left: calc(50% + 359px); top: calc(50% - 203px);
 }
@@ -110,6 +113,17 @@
   bottom: calc(50% + 224px);
 }
 
+.meter {
+  position: absolute;
+  bottom: calc(50% + 209px);
+  font-size: 20px;
+  right: calc(50% - 353px);
+}
+
+.meter div {
+  float: left;
+}
+
 .getitem {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   z-index: -98;
@@ -143,7 +157,7 @@
   background-position-x: 0px;
 }
 
-.raser {
+.laser {
   z-index: -1;
 }
 

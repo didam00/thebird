@@ -1,7 +1,7 @@
 data.ability = [
   {
-    id: 'raser',
-    name: 'Raser',
+    id: 'laser',
+    name: 'Laser',
     cool: 2000,
     damage: 0.2,
   }
