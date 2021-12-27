@@ -3,20 +3,22 @@ data.item = [
     id: 'moreshroom',
     name: 'Moreshroom',
     url: 'moreshroom.png',
-    description: 'bird size up!',
+    description: 'bird size up!', // 크기 증가 및 파워 증가
     when_get: function () {
       bird.stat.size += 0.2;
+      bird.stat.power += 0.5;
     },
   },
   {
     id: 'giant_doll',
     name: 'Giant Doll',
     url: 'giant_doll.png',
-    description: 'bird be giant.',
+    description: 'bird be giant.', // 크기 증가 및 파워 증가
     when_get: function () {
       bird.stat.size = 3;
       bird.stat.jump = 2;
       bird.health += 15;
+      bird.stat.power += 1.5;
     },
   },
   {
@@ -34,14 +36,16 @@ data.item = [
     url: 'blue_spike.png',
     description: 'speed up!', // 10초마다 속도가 아주 잠깐 미친듯이 증가
     cool_end: function () {
-      bird.stat.speed += 25;
+      bird.stat.speed += 15;
       bird.immune = true;
       bird.url = 'blue-bird.png';
       setTimeout(function () {
-        bird.stat.speed -= 25;
-        bird.immune = false;
+        bird.stat.speed -= 15;
         bird.url = 'normal-bird.png';
-      }, 200)
+        setTimeout(function () {
+          bird.immune = false;
+        }, 350 + bird.stat.magic_mushroom)
+      }, 300)
     },
     cool: 10000,
   },
@@ -49,7 +53,7 @@ data.item = [
     id: 'turtle_shell',
     name: 'Turtle Shell',
     url: 'turtle_shell.png',
-    description: 'speed down!',
+    description: 'speed down!', // 속도 감소하지만 피해를 받을 때 25% 확률로 무시.
     when_get: function () {
       bird.stat.speed -= 0.2;
     },
@@ -84,9 +88,10 @@ data.item = [
     id: 'red_brick',
     name: 'Red Brick',
     url: 'red_brick.png',
-    description: '-', // 레이저 등의 지속 시간 증가
+    description: '-', // 레이저 등의 지속 시간 증가 및 피해 증가
     when_get: function () {
       bird.stat.redbrick += 0.66;
+      bird.stat.power += 0.25;
       bird.stat.ability_cooldown += 0.5;
     },
   },
@@ -103,7 +108,10 @@ data.item = [
     id: 'trampoline',
     name: 'Trampoline',
     url: 'trampoline.png',
-    description: '-', // 가시 위에서 50% 확률로 점프
+    description: '-', // 가시 위에서 50% 확률로 점프, 점프 높이 증아
+    when_get: function () {
+      bird.stat.jump += 0.2;
+    }
   },
   {
     id: 'emerald_timer',
@@ -118,10 +126,10 @@ data.item = [
     id: 'yellow_eyeball',
     name: 'Yellow Eyeball',
     url: 'yellow_eyeball.png',
-    description: '-', // 능력 발동 쿨타임 감소. 25초마다 쿨타임 초기화
-    cool: 25000,
+    description: '-', // 능력 발동 쿨타임 감소. 12초마다 쿨타임 초기화
+    cool: 12000,
     when_get() {
-      bird.stat.ability_cooldown -= 0.2;
+      bird.stat.ability_cooldown -= 0.25;
     },
     cool_end() {
       bird.ability_cool = 1;
@@ -133,7 +141,7 @@ data.item = [
     url: 'loud_speaker.png',
     description: '-', // 레이저의 두께 증가
     when_get() {
-      bird.stat.speaker += 0.5;
+      bird.stat.speaker += 0.75;
     },
   },
   {
@@ -162,6 +170,6 @@ data.item = [
         }, 2000)
       }, 5000)
     },
-    cool: 30000,
+    cool: 35000,
   },
 ]

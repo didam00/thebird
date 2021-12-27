@@ -27,6 +27,47 @@ data.entity = [
     }
   },
   {
+    id: 'blue_bat',
+    name: 'Blue Bat',
+    url: 'blue_bat.gif',
+    health: 8,
+    speed: 0.2,
+    width: 18,
+    height: 7,
+    attack: 2,
+    when_die(o) {
+      summon('blue_bat_2', o.position.x, o.position.y);
+    }
+  },
+  {
+    id: 'blue_bat_2',
+    name: 'Blue Bat Error',
+    url: 'blue_bat_2.gif',
+    health: 2,
+    speed: 2,
+    width: 18,
+    height: 7,
+    attack: 8,
+    when_die(o) {
+      summon('blue_bat_boom', o.position.x, o.position.y);
+    }
+  },
+  {
+    id: 'blue_bat_boom',
+    name: 'Blue Bat Boom',
+    url: 'blue_bat_boom.gif',
+    health: 999,
+    speed: 0,
+    width: 51,
+    height: 51,
+    attack: 8,
+    cool: 250,
+    func(o) {
+      o.element.remove();
+      entitys.splice(entitys.indexOf(o), 1);
+    }
+  },
+  {
     id: 'princess_bunny',
     name: 'Princess Bunny',
     health: 45,
@@ -79,7 +120,7 @@ data.entity = [
     id: 'blue_bird',
     name: 'Blue Bird',
     url: 'blue_bird_reverse.png',
-    health: 25,
+    health: 16,
     speed: 1,
     width: 17,
     height: 12,
@@ -100,7 +141,7 @@ data.entity = [
   {
     id: 'boom_fly',
     name: 'Boom Fly',
-    health: 60,
+    health: 24,
     speed: 0,
     url: 'boom_fly.gif',
     width: 25,

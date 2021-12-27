@@ -59,6 +59,9 @@ bird.jump = function () {
       if(getid(bird.item, 'magic_mushroom')) {
         if(Math.random() <= 0.33) {
           laser.css('background-color', '#f0f');
+          playsound('purple_laser.wav')
+        } else {
+          playsound('laser.wav')
         }
       }
       if(getid(bird.item, 'ice_glass')) {
@@ -88,7 +91,6 @@ bird.jump = function () {
         // laser_end.remove();
       }, 500 * bird.stat.redbrick);
 
-      playsound('laser.wav')
     }
   }
   playsound('jump.wav');
@@ -313,22 +315,48 @@ function tickfunction() {
     if(Math.random() < 0.0005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
       summon('blue_bird');
     }
-  } else if(setting.meter > 3000) {
+  } else if(setting.meter < 4000) {
     if(Math.random() < 0.002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
       summon('bat');
     }
-    if(Math.random() < 0.005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+    if(Math.random() < 0.0045 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
       summon('emerald_bat');
     }
-    if(Math.random() < 0.0005 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+    if(Math.random() < 0.0003 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
       summon('blue_bird');
     }
-    if(Math.random() < 0.0003 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
-      summon('boom_fly');
+    if(Math.random() < 0.0015 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bat');
+    }
+  } else if(setting.meter < 5000) {
+    if(Math.random() < 0.0015 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('bat');
+    }
+    if(Math.random() < 0.0040 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('emerald_bat');
+    }
+    if(Math.random() < 0.0002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bird');
+    }
+    if(Math.random() < 0.0025 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bat');
+    }
+  } else if(setting.meter < 6000) {
+    if(Math.random() < 0.0035 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('emerald_bat');
+    }
+    if(Math.random() < 0.0004 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bird');
+    }
+    if(Math.random() < 0.004 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('blue_bat');
+    }
+    if(Math.random() < 0.0002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+      summon('flyboom');
     }
   }
 
-  if(Math.random() < 0.0002 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
+  if(Math.random() < 0.0006 * setting.calc * ((bird.stat.speed < 0.1 ? 0.1 : bird.stat.speed))/2) {
     summon('white-box');
   }
 
@@ -371,17 +399,22 @@ function tickfunction() {
             if(entity.data.hasOwnProperty('weak')) {
               if(entity.data.hasOwnProperty('when_die')) {
                 entity.data.when_die(entity);
+                playsound('point.wav')
               }
               entity.element.remove();
               entitys.splice(i, 1);
             }
             if(entity.data.attack > 0) {
-              bird.health -= entity.data.attack;
-              playsound('hitHurt.wav')
-              bird.immune = true;
-              setTimeout(function () {
-                bird.immune = false;
-              }, 500 + (bird.stat.magic_mushroom-1));
+              if(getid(bird.item, 'turtle_shell') && Math.random() < 0.25) {
+                playsound('turtle_shell.wav')
+              } else {
+                bird.health -= entity.data.attack;
+                playsound('hitHurt.wav')
+                bird.immune = true;
+                setTimeout(function () {
+                  bird.immune = false;
+                }, 500 + (bird.stat.magic_mushroom-1));
+              }
             }
           }
         }
@@ -481,10 +514,10 @@ function framefunction() {
           $('.score, .score div').css('transition', 'all 500ms');
           $('.score, .score div').css('color', '');
         }, 500)
-
         if(entity.data.hasOwnProperty('when_die')) {
           entity.data.when_die(entity);
         }
+        playsound('point.wav')
       }
       entity.element.remove();
       entitys.splice(i, 1);
